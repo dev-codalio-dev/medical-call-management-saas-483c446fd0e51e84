@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_20_174107) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_174201) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_174107) do
     t.index ["reset_password_token"], name: "index_admin_users_on_reset_password_token", unique: true
   end
 
+  create_table "call_logs", force: :cascade do |t|
+    t.datetime "call_time", null: false
+    t.bigint "patient_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patient_id"], name: "index_call_logs_on_patient_id"
+  end
+
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
@@ -89,6 +97,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_174107) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "patients", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "dob", null: false
+    t.bigint "organization_id", null: false
+    t.bigint "creator_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_patients_on_creator_id"
+    t.index ["organization_id"], name: "index_patients_on_organization_id"
+  end
+
+  create_table "recordings", force: :cascade do |t|
+    t.bigint "call_log_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["call_log_id"], name: "index_recordings_on_call_log_id"
   end
 
   create_table "roles", force: :cascade do |t|
@@ -239,6 +265,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_174107) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "summaries", force: :cascade do |t|
+    t.text "summary_text", null: false
+    t.bigint "recording_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recording_id"], name: "index_summaries_on_recording_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -301,12 +335,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_174107) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "call_logs", "patients"
+  add_foreign_key "patients", "organizations"
+  add_foreign_key "patients", "users", column: "creator_id"
+  add_foreign_key "recordings", "call_logs"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "summaries", "recordings"
   add_foreign_key "users_role_invites", "organizations"
   add_foreign_key "users_role_invites", "roles"
   add_foreign_key "users_roles", "organizations"
